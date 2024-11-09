@@ -3,12 +3,13 @@ package net.fitken.mlselfiecamera.selfie
 import android.Manifest
 import android.annotation.SuppressLint
 import android.app.Activity
+import android.app.ProgressDialog
 import android.content.Intent
 import android.graphics.Bitmap
 import android.os.Bundle
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import kotlinx.android.synthetic.main.activity_selfie.*
-import net.fitken.mlselfiecamera.R
+import net.fitken.mlselfiecamera.databinding.ActivitySelfieBinding
 import net.fitken.mlselfiecamera.camera.CameraSource
 import net.fitken.mlselfiecamera.facedetection.FaceContourDetectorProcessor
 import net.fitken.mlselfiecamera.util.PermissionUtil
@@ -20,7 +21,6 @@ import java.io.IOException
 
 class SelfieActivity : AppCompatActivity(),
     FaceContourDetectorProcessor.FaceContourDetectorListener {
-
 
     companion object {
         const val KEY_IMAGE_PATH = "image_path"
@@ -36,71 +36,119 @@ class SelfieActivity : AppCompatActivity(),
         }
     }
 
+    private lateinit var binding: ActivitySelfieBinding
     private var mCameraSource: CameraSource? = null
     private var mCapturedBitmap: Bitmap? = null
     private lateinit var mFaceContourDetectorProcessor: FaceContourDetectorProcessor
+    private lateinit var progressDialog: ProgressDialog
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_selfie)
+        binding = ActivitySelfieBinding.inflate(layoutInflater)
+        setContentView(binding.root)
 
         val textBack = intent?.extras?.getString(KEY_TEXT_BACK)
         val textDescription = intent?.extras?.getString(KEY_TEXT_DESCRIPTION)
+
         textBack?.let {
-            tv_back.text = it
-        }
-        textDescription?.let {
-            tv_description.text = it
+            binding.tvBack.text = it
         }
 
-        if (PermissionUtil.isHavePermission(
-                this, PERMISSION_CAMERA_REQUEST_CODE, Manifest.permission.CAMERA
-            )
-        ) {
+        textDescription?.let {
+            binding.tvDescription.text = it
+        }
+
+        if (PermissionUtil.isHavePermission(this, PERMISSION_CAMERA_REQUEST_CODE, Manifest.permission.CAMERA)) {
             createCameraSource()
         }
 
         startCameraSource()
 
-        tv_back.setOnClickListener {
+        binding.tvBack.setOnClickListener {
             onBackPressed()
         }
 
-        iv_capture.setOnClickListener {
+        binding.ivCapture.setOnClickListener {
+            showProgressDialog()
             createSelfiePictureAndReturn()
+        }
+
+        binding.btnCloseActivity.setOnClickListener {
+            val dialog = ProgressDialog(this)
+            dialog.setMessage("Exiting...")
+            dialog.setCancelable(false)
+            dialog.show()
+
+            binding.root.postDelayed({
+                dialog.dismiss()  // 다이얼로그 닫고 종료
+                finish()
+            }, 500)  // 500ms 후 종료
+        }
+
+    }
+
+    private fun showProgressDialog() {
+        progressDialog = ProgressDialog(this)
+        progressDialog.setMessage("Saving your selfie...")
+        progressDialog.setCancelable(false)
+        progressDialog.show()
+    }
+
+    private fun dismissProgressDialog() {
+        if (::progressDialog.isInitialized && progressDialog.isShowing) {
+            progressDialog.dismiss()
         }
     }
 
+    private fun restartSelfieCaptureScreen() {
+        binding.ivCapture.alpha = 1F
+        binding.ivCapture.isEnabled = true
+    }
+
     private fun createSelfiePictureAndReturn() {
-        val file = File(cacheDir, "selfie.jpg")
-        file.createNewFile()
+        Thread {
+            val file = File(cacheDir, "selfie.jpg")
+            file.createNewFile()
 
-        //Convert bitmap to byte array
-        val bos = ByteArrayOutputStream()
-        mCapturedBitmap?.compress(
-            Bitmap.CompressFormat.PNG, 100, bos
-        )
-        val bitmapData = bos.toByteArray()
+            try {
+                val bos = ByteArrayOutputStream()
+                mCapturedBitmap?.compress(Bitmap.CompressFormat.PNG, 100, bos)
+                val bitmapData = bos.toByteArray()
 
-        //write the bytes in file
-        val fos = FileOutputStream(file)
-        fos.write(bitmapData)
-        fos.flush()
-        fos.close()
-        val intent = Intent()
-        intent.putExtra(KEY_IMAGE_PATH, file.absolutePath)
-        setResult(Activity.RESULT_OK, intent)
-        finish()
+                val fos = FileOutputStream(file)
+                fos.write(bitmapData)
+                fos.flush()
+                fos.close()
+
+                val intent = Intent().apply {
+                    putExtra(KEY_IMAGE_PATH, file.absolutePath)
+                }
+                setResult(Activity.RESULT_OK, intent)
+
+            } catch (e: IOException) {
+                e.printStackTrace()
+                runOnUiThread {
+                    Toast.makeText(this, "Error saving the selfie", Toast.LENGTH_SHORT).show()
+                }
+            } finally {
+                Thread.sleep(500)
+
+                runOnUiThread {
+                    dismissProgressDialog()
+                    restartSelfieCaptureScreen()
+                }
+            }
+        }.start()
     }
 
     private fun createCameraSource() {
         // If there's no existing cameraSource, create one.
         if (mCameraSource == null) {
-            mCameraSource = CameraSource(this, face_overlay)
+            mCameraSource = CameraSource(this, binding.faceOverlay)
         }
 
         Rose.error("Using Face Contour Detector Processor")
-        mFaceContourDetectorProcessor = FaceContourDetectorProcessor(this, false)
+        mFaceContourDetectorProcessor = FaceContourDetectorProcessor(this, true, mCameraSource!!)
         mCameraSource?.setMachineLearningFrameProcessor(mFaceContourDetectorProcessor)
     }
 
@@ -112,7 +160,7 @@ class SelfieActivity : AppCompatActivity(),
     private fun startCameraSource() {
         mCameraSource?.let {
             try {
-                camera_preview.start(mCameraSource, face_overlay)
+                binding.cameraPreview.start(mCameraSource, binding.faceOverlay)
             } catch (e: IOException) {
                 Rose.error("Unable to start camera source.  $e")
                 mCameraSource?.release()
@@ -129,7 +177,7 @@ class SelfieActivity : AppCompatActivity(),
     /** Stops the camera.  */
     override fun onPause() {
         super.onPause()
-        camera_preview.stop()
+        binding.cameraPreview.stop()
     }
 
     public override fun onDestroy() {
@@ -138,16 +186,11 @@ class SelfieActivity : AppCompatActivity(),
     }
 
     @SuppressLint("MissingPermission")
-    override fun onRequestPermissionsResult(
-        requestCode: Int, permissions: Array<String>, grantResults: IntArray
-    ) {
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         when (requestCode) {
             PERMISSION_CAMERA_REQUEST_CODE -> {
-                if (PermissionUtil.isPermissionGranted(
-                        requestCode, PERMISSION_CAMERA_REQUEST_CODE, grantResults
-                    )
-                ) {
+                if (PermissionUtil.isPermissionGranted(requestCode, PERMISSION_CAMERA_REQUEST_CODE, grantResults)) {
                     createCameraSource()
                 } else {
                     onBackPressed()
@@ -158,13 +201,25 @@ class SelfieActivity : AppCompatActivity(),
 
     override fun onCapturedFace(originalCameraImage: Bitmap) {
         mCapturedBitmap = originalCameraImage
-        iv_capture.alpha = 1F
-        iv_capture.isEnabled = true
+        binding.ivCapture.alpha = 1F
+        binding.ivCapture.isEnabled = true
     }
 
     override fun onNoFaceDetected() {
         mCapturedBitmap = null
-        iv_capture.alpha = 0.3F
-        iv_capture.isEnabled = false
+        binding.ivCapture.alpha = 0.3F
+        binding.ivCapture.isEnabled = false
+    }
+
+    override fun onFaceDirectionDetected(isLookingRight: Boolean, isLookingLeft: Boolean) {
+        when {
+            isLookingRight && !isLookingLeft -> binding.faceDirection.text = "➡️ Looking to the right"
+            !isLookingRight && isLookingLeft -> binding.faceDirection.text = "⬅️ Looking to the left"
+            else -> binding.faceDirection.text = "↔️ Looking straight ahead"
+        }
+    }
+
+    override fun onShowFaceDistance(string: String) {
+        binding.faceDistance.text = string
     }
 }

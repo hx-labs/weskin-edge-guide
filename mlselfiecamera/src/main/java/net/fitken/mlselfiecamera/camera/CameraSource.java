@@ -127,17 +127,50 @@ public class CameraSource {
      */
     private final Map<byte[], ByteBuffer> bytesToByteBuffer = new IdentityHashMap<>();
 
+    public float F = 1f;           //focal length
+    public float sensorX, sensorY; //camera sensor dimensions
+    public float angleX, angleY;
+
     public CameraSource(Activity activity, GraphicOverlay overlay) {
         this.activity = activity;
         graphicOverlay = overlay;
         graphicOverlay.clear();
         processingRunnable = new FrameProcessingRunnable();
 
-        if (Camera.getNumberOfCameras() == 1) {
-            CameraInfo cameraInfo = new CameraInfo();
-            Camera.getCameraInfo(0, cameraInfo);
-            facing = cameraInfo.facing;
+//        if (Camera.getNumberOfCameras() == 1) {
+//            CameraInfo cameraInfo = new CameraInfo();
+//            Camera.getCameraInfo(0, cameraInfo);
+//            facing = cameraInfo.facing;
+//        }
+
+        Camera camera = frontCam();
+        Camera.Parameters campar = camera.getParameters();
+        F = campar.getFocalLength();
+        angleX = campar.getHorizontalViewAngle();
+        angleY = campar.getVerticalViewAngle();
+        sensorX = (float) (Math.tan(Math.toRadians(angleX / 2)) * 2 * F);
+        sensorY = (float) (Math.tan(Math.toRadians(angleY / 2)) * 2 * F);
+
+    }
+
+    private Camera frontCam() {
+        int cameraCount = 0;
+        Camera cam = null;
+        Camera.CameraInfo cameraInfo = new Camera.CameraInfo();
+        cameraCount = Camera.getNumberOfCameras();
+        for (int camIdx = 0; camIdx < cameraCount; camIdx++) {
+            Camera.getCameraInfo(camIdx, cameraInfo);
+            Log.v("CAMID", camIdx + "");
+            if (cameraInfo.facing == Camera.CameraInfo.CAMERA_FACING_FRONT) {
+                try {
+                    cam = Camera.open(camIdx);
+                } catch (RuntimeException e) {
+                    Log.e("FAIL", "Camera failed to open: " + e.getLocalizedMessage());
+                }
+            }
         }
+
+        return cam;
     }
 
     // ==============================================================================================
@@ -209,15 +242,6 @@ public class CameraSource {
         return this;
     }
 
-    /**
-     * Closes the camera and stops sending frames to the underlying frame detector.
-     *
-     * <p>This camera source may be restarted again by calling {@link #start(int previewWidth, int previewHeight)} or {@link
-     * #start(SurfaceHolder)}.
-     *
-     * <p>Call {@link #release()} instead to completely shut down this camera source and release the
-     * resources of the underlying detector.
-     */
     public synchronized void stop() {
         processingRunnable.setActive(false);
         if (processingThread != null) {

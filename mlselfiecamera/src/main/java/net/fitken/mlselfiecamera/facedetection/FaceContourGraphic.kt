@@ -1,3 +1,5 @@
+@file:Suppress("DEPRECATION")
+
 package net.fitken.mlselfiecamera.facedetection
 
 import android.graphics.Canvas
@@ -40,19 +42,19 @@ class FaceContourGraphic(
         val face = firebaseVisionFace ?: return
 
         // Draws a circle at the position of the detected face, with the face's track id below.
-        val x = translateX(face.boundingBox.centerX().toFloat())
-        val y = translateY(face.boundingBox.centerY().toFloat())
+//        val x = translateX(face.boundingBox.centerX().toFloat())
+//        val y = translateY(face.boundingBox.centerY().toFloat())
 //        canvas.drawCircle(x, y, FACE_POSITION_RADIUS, facePositionPaint)
 //        canvas.drawText("id: ${face.trackingId}", x + ID_X_OFFSET, y + ID_Y_OFFSET, idPaint)
 
         // Draws a bounding box around the face.
-        val xOffset = scaleX(face.boundingBox.width() / 2.0f)
-        val yOffset = scaleY(face.boundingBox.height() / 2.0f)
-        val left = x - xOffset
-        val top = y - yOffset
-        val right = x + xOffset
-        val bottom = y + yOffset
-        canvas.drawRect(left, top, right, bottom, boxPaint)
+//        val xOffset = scaleX(face.boundingBox.width() / 2.0f)
+//        val yOffset = scaleY(face.boundingBox.height() / 2.0f)
+//        val left = x - xOffset
+//        val top = y - yOffset
+//        val right = x + xOffset
+//        val bottom = y + yOffset
+//        canvas.drawRect(left, top, right, bottom, boxPaint)
 
         val contour = face.getContour(FirebaseVisionFaceContour.ALL_POINTS)
         for (point in contour.points) {
@@ -60,7 +62,7 @@ class FaceContourGraphic(
             val py = translateY(point.y)
             canvas.drawCircle(px, py, FACE_POSITION_RADIUS, facePositionPaint)
         }
-//
+
 //        if (face.smilingProbability >= 0) {
 //            canvas.drawText(
 //                "happiness: ${String.format("%.2f", face.smilingProbability)}",
@@ -69,7 +71,7 @@ class FaceContourGraphic(
 //                idPaint
 //            )
 //        }
-//
+
 //        if (face.rightEyeOpenProbability >= 0) {
 //            canvas.drawText(
 //                "right eye: ${String.format("%.2f", face.rightEyeOpenProbability)}",
@@ -86,6 +88,7 @@ class FaceContourGraphic(
 //                idPaint
 //            )
 //        }
+
         val leftEye = face.getLandmark(FirebaseVisionFaceLandmark.LEFT_EYE)
         leftEye?.position?.let {
             canvas.drawCircle(
@@ -129,8 +132,8 @@ class FaceContourGraphic(
 
         private const val FACE_POSITION_RADIUS = 4.0f
         private const val ID_TEXT_SIZE = 30.0f
-        private const val ID_Y_OFFSET = 80.0f
-        private const val ID_X_OFFSET = -70.0f
+//        private const val ID_Y_OFFSET = 80.0f
+//        private const val ID_X_OFFSET = -70.0f
         private const val BOX_STROKE_WIDTH = 5.0f
     }
 }

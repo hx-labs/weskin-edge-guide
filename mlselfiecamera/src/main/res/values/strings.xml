@@ -2,4 +2,5 @@
     <string name="app_name">MLSelfieCamera</string>
     <string name="back">Back</string>
     <string name="look_straight_to_the_camera">Look straight to the Camera</string>
+    <string name="close">Close</string>
 </resources>

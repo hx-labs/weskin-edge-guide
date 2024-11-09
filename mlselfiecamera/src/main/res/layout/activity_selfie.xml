@@ -8,6 +8,7 @@
         android:fitsSystemWindows="true">
 
         <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/constraintLayout"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:keepScreenOn="true">
@@ -32,6 +33,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 app:layout_constraintEnd_toEndOf="@+id/guideline_right"
+                app:layout_constraintHorizontal_bias="0.0"
                 app:layout_constraintStart_toStartOf="@+id/guideline_left"
                 app:layout_constraintTop_toTopOf="parent">
 
@@ -40,10 +42,10 @@
                     android:layout_width="match_parent"
                     android:layout_height="match_parent" />
 
-                <net.fitken.mlselfiecamera.widget.CircleCameraMaskPreview
-                    android:id="@+id/camera_mask"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent" />
+                <!--                <net.fitken.mlselfiecamera.widget.CircleCameraMaskPreview-->
+                <!--                    android:id="@+id/camera_mask"-->
+                <!--                    android:layout_width="match_parent"-->
+                <!--                    android:layout_height="match_parent" />-->
             </net.fitken.mlselfiecamera.camera.CameraSourcePreview>
 
             <TextView
@@ -76,15 +78,54 @@
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent" />
 
+            <Button
+                android:id="@+id/btnCloseActivity"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/close"
+                android:textColor="#f78320"
+                android:textSize="@dimen/text_size_13sp"
+                android:layout_marginTop="@dimen/positive_2dp"
+                android:typeface="sans"
+                android:background="@android:color/transparent"
+                app:layout_constraintTop_toTopOf="@+id/tv_back"
+                app:layout_constraintEnd_toEndOf="@+id/guideline_right" />
+
             <TextView
                 android:id="@+id/tv_description"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
+                android:layout_marginBottom="@dimen/positive_5dp"
                 android:gravity="center"
                 android:text="@string/look_straight_to_the_camera"
-                android:layout_marginBottom="@dimen/positive_5dp"
                 android:textColor="@android:color/white"
                 android:textSize="@dimen/text_size_12sp"
+                app:layout_constraintBottom_toTopOf="@+id/iv_capture"
+                app:layout_constraintEnd_toEndOf="@+id/guideline_right"
+                app:layout_constraintStart_toStartOf="@+id/guideline_left" />
+
+            <TextView
+                android:id="@+id/face_direction"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="@dimen/positive_80dp"
+                android:gravity="center"
+                android:text="Face Direction"
+                android:textColor="@android:color/white"
+                android:textSize="@dimen/text_size_20sp"
+                app:layout_constraintBottom_toTopOf="@+id/iv_capture"
+                app:layout_constraintEnd_toEndOf="@+id/guideline_right"
+                app:layout_constraintStart_toStartOf="@+id/guideline_left" />
+
+            <TextView
+                android:id="@+id/face_distance"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="@dimen/positive_120dp"
+                android:gravity="center"
+                android:text="Face Distance"
+                android:textColor="@android:color/white"
+                android:textSize="@dimen/text_size_20sp"
                 app:layout_constraintBottom_toTopOf="@+id/iv_capture"
                 app:layout_constraintEnd_toEndOf="@+id/guideline_right"
                 app:layout_constraintStart_toStartOf="@+id/guideline_left" />

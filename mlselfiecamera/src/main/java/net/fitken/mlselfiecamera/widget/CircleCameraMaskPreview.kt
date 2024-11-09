@@ -73,17 +73,17 @@ class CircleCameraMaskPreview : View {
         )
     }
 
-    override fun onDraw(canvas: Canvas?) {
+    override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
-        canvas?.drawPaint(mPaintMask)
-        canvas?.drawCircle(
+        canvas.drawPaint(mPaintMask)
+        canvas.drawCircle(
             (width / 2).toFloat(),
             (height / 2).toFloat(),
             (width / 2).toFloat() - context.resources.getDimension(R.dimen.positive_5dp),
             mPaintCircle
         )
         mPaintMask.xfermode = mPorterDuffMode
-        canvas?.drawCircle(
+        canvas.drawCircle(
             (width / 2).toFloat(),
             (height / 2).toFloat(),
             (width / 2).toFloat() - context.resources.getDimension(R.dimen.positive_10dp),
